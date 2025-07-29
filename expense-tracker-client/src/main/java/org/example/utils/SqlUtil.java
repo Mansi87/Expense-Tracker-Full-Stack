@@ -234,6 +234,30 @@ public class SqlUtil {
             return false;
     }
 
+    public static boolean putTransaction(JsonObject newTransactionData){
+        HttpURLConnection conn = null;
+        try{
+            conn = ApiUtil.fetchApi(
+                    "/api/v1/transaction",
+                    ApiUtil.RequestMethod.PUT,
+                    newTransactionData
+            );
+
+            if(conn.getResponseCode()!=200){
+                System.out.println("Error(putTransaction): " + conn.getResponseCode());
+                return false;
+            }
+            return true;
+        }catch(IOException e){
+            e.printStackTrace();
+        }finally {
+            if(conn!=null){
+                conn.disconnect();
+            }
+        }
+        return false;
+    }
+
     public static boolean putTransactionCategory(int categoryId, String newCategoryName, String newCategoryColor){
         HttpURLConnection conn = null;
         try{

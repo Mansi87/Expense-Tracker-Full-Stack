@@ -26,7 +26,8 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
     private TextField transactionNameField, transactionAmountField;
     private DatePicker transactionDatePicker;
     private ComboBox<String> transactionCategoryBox;
-    private TransactionComponent trans
+    private TransactionComponent transactionComponent;
+    private DashboardController dashboardController;
     private ToggleGroup transactionTypeToggleGroup;
 
     private boolean isEditing;
@@ -35,6 +36,9 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
     public CreateOrEditTransactionDialog(DashboardController dashboardcontroller, TransactionComponent transactionComponent, boolean isEditing){
         super(dashboardcontroller.getUser());
         this.isEditing = isEditing;
+        this.transactionComponent = transactionComponent;
+        this.dashboardController = dashboardcontroller;
+
 
         setTitle(isEditing ? "Edit Transaction" : "Creating New Transaction");
         setWidth(700);
@@ -79,7 +83,13 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
         }
 
         if(isEditing){
-            Transaction transaction =
+            Transaction transaction = transactionComponent.getTransaction();
+            transactionNameField.setText(transaction.getTransactionName());
+            transactionAmountField.setText(String.valueOf(transaction.getTransactionAmount()));
+            transactionDatePicker.setValue(transaction.getTransactionDate());
+            transactionCategoryBox.setValue(
+                    transaction.getTransactionCategory() == null ? "" : transaction.getTransactionCategory().getCategoryName()
+            );
         }
 
         mainContentBox.getChildren().addAll(transactionNameField, transactionAmountField, transactionDatePicker, transactionCategoryBox, createTransactionTypeRadioButtonGroup(),
@@ -101,6 +111,15 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
         expenseRadioButton.setToggleGroup(transactionTypeToggleGroup);
         expenseRadioButton.getStyleClass().addAll("text-size-sm", "text-light-gray");
 
+        if(isEditing){
+            Transaction transaction = transactionComponent.getTransaction();
+            if(transaction.getTransactionType().equalsIgnoreCase("income")){
+                incomeRadioButton.setSelected(true);
+            }
+            else{
+                expenseRadioButton.setSelected(true);
+            }
+        }
         radioButtonsBox.getChildren().addAll(incomeRadioButton, expenseRadioButton);
         return radioButtonsBox;
     }
@@ -116,6 +135,10 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
             @Override
             public void handle(MouseEvent mouseEvent) {
                 JsonObject transactionDataObject = new JsonObject();
+
+                if(isEditing){
+                        transactionDataObject.addProperty("id", transactionComponent.getTransaction().getId());
+                }
 
                 String transactionName = transactionNameField.getText();
                 transactionDataObject.addProperty("transactionName", transactionName);
@@ -147,11 +170,15 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
                 userData.addProperty("id", user.getId());
                 transactionDataObject.add("user", userData);
 
-                if(SqlUtil.postTransaction(transactionDataObject)){
-                    Utilitie.showAlertDialog(Alert.AlertType.INFORMATION, "Transaction creation Successful!");
+                if(!isEditing ? SqlUtil.postTransaction(transactionDataObject) : SqlUtil.putTransaction(transactionDataObject)){
+                    Utilitie.showAlertDialog(Alert.AlertType.INFORMATION,
+                            isEditing ? "Successfully saved transaction!" :"Transaction creation Successful!");
+
+                    dashboardController.fetchUserData();
                 }
                 else{
-                    Utilitie.showAlertDialog(Alert.AlertType.ERROR, "Error: Failed to create..");
+                    Utilitie.showAlertDialog(Alert.AlertType.ERROR,
+                            isEditing ? "Error: Failed to save transaction" : "Error: Failed to create..");
                 }
             }
         });

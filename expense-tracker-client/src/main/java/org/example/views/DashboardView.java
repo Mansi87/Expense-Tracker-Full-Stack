@@ -1,15 +1,18 @@
 package org.example.views;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import org.example.animations.LoadingAnimationPane;
 import org.example.controllers.DashboardController;
 import org.example.utils.Utilitie;
 import org.example.utils.ViewNavigator;
 
 public class DashboardView {
     private String email;
-
+    private LoadingAnimationPane loadingAnimationPane;
     private Label currentBalanceLabel, currentBalance;
     private Label totalIncomeLabel, totalIncome;
     private Label totalExpenseLabel, totalExpense;
@@ -17,11 +20,11 @@ public class DashboardView {
     private VBox recentTransactionBox;
     private ScrollPane recentTransactionScrollPane;
 
-    private MenuItem createCategoryMenuItem, viewCategoriesMenuItem;
+    private MenuItem createCategoryMenuItem, viewCategoriesMenuItem, logoutMenuItem;
 
     public DashboardView(String email){
         this.email = email;
-
+        loadingAnimationPane = new LoadingAnimationPane(Utilitie.APP_WIDTH, Utilitie.APP_HEIGHT);
         currentBalanceLabel = new Label("Current Balance:");
         totalIncomeLabel = new Label("Total Income:");
         totalExpenseLabel = new Label("Total Expense:");
@@ -37,6 +40,19 @@ public class DashboardView {
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         new DashboardController(this);
+
+        scene.widthProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+                loadingAnimationPane.resizeWidth(t1.doubleValue());
+            }
+        });
+        scene.heightProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+                loadingAnimationPane.resizeHeight(t1.doubleValue());
+            }
+        });
         ViewNavigator.switchViews(scene);
     }
 
@@ -55,7 +71,7 @@ public class DashboardView {
         VBox.setVgrow(contentGridPane, Priority.ALWAYS);
 
         mainContainerWrapper.getChildren().addAll(balanceSummaryBox, contentGridPane);
-        mainContainer.getChildren().addAll(menuBar, mainContainerWrapper);
+        mainContainer.getChildren().addAll(menuBar, mainContainerWrapper, loadingAnimationPane);
         return new Scene(mainContainer, Utilitie.APP_WIDTH, Utilitie.APP_HEIGHT);
     }
 
@@ -65,8 +81,9 @@ public class DashboardView {
 
         createCategoryMenuItem = new MenuItem("Create Category");
         viewCategoriesMenuItem = new MenuItem("View Categories");
+        logoutMenuItem = new MenuItem("Logout");
 
-        fileMenu.getItems().addAll(createCategoryMenuItem, viewCategoriesMenuItem);
+        fileMenu.getItems().addAll(createCategoryMenuItem, viewCategoriesMenuItem, logoutMenuItem);
         menuBar.getMenus().addAll(fileMenu);
         return menuBar;
     }
@@ -145,6 +162,10 @@ public class DashboardView {
         return createCategoryMenuItem;
     }
 
+    public MenuItem getLogoutMenuItem(){
+        return logoutMenuItem;
+    }
+
     public void setCreateCategoryMenuItem(MenuItem createCategoryMenuItem) {
         this.createCategoryMenuItem = createCategoryMenuItem;
     }
@@ -163,5 +184,9 @@ public class DashboardView {
 
     public VBox getRecentTransactionBox() {
         return recentTransactionBox;
+    }
+
+    public LoadingAnimationPane getLoadingAnimationPane(){
+        return loadingAnimationPane;
     }
 }

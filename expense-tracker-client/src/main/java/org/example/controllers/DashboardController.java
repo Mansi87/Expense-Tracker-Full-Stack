@@ -11,6 +11,7 @@ import org.example.models.Transaction;
 import org.example.models.User;
 import org.example.utils.SqlUtil;
 import org.example.views.DashboardView;
+import org.example.views.LoginView;
 
 import java.util.List;
 
@@ -31,9 +32,22 @@ public class DashboardController {
     }
 
     public void fetchUserData(){
-        user = SqlUtil.getUserByEmail(dashboardView.getEmail());
+        dashboardView.getLoadingAnimationPane().setVisible(true);
         dashboardView.getRecentTransactionBox().getChildren().clear();
+        user = SqlUtil.getUserByEmail(dashboardView.getEmail());
         createRecentTransactionComponents();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Thread.sleep(1000);
+                    dashboardView.getLoadingAnimationPane().setVisible(false);
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private void createRecentTransactionComponents(){
@@ -69,6 +83,13 @@ public class DashboardController {
             @Override
             public void handle(ActionEvent actionEvent) {
                 new ViewOrEditTransactionCategoryDialog(user, DashboardController.this).showAndWait();
+            }
+        });
+
+        dashboardView.getLogoutMenuItem().setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                new LoginView().show();
             }
         });
     }
