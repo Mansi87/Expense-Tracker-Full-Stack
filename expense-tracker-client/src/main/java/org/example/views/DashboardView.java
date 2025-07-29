@@ -1,14 +1,20 @@
 package org.example.views;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import org.example.animations.LoadingAnimationPane;
 import org.example.controllers.DashboardController;
+import org.example.models.MonthlyFinance;
 import org.example.utils.Utilitie;
 import org.example.utils.ViewNavigator;
+
+import java.math.BigDecimal;
+import java.time.Year;
 
 public class DashboardView {
     private String email;
@@ -16,11 +22,17 @@ public class DashboardView {
     private Label currentBalanceLabel, currentBalance;
     private Label totalIncomeLabel, totalIncome;
     private Label totalExpenseLabel, totalExpense;
-    private Button addTransactionButton;
+    private ComboBox<Integer> yearComboBox;
+    private Button addTransactionButton,viewChartButton;
     private VBox recentTransactionBox;
     private ScrollPane recentTransactionScrollPane;
 
     private MenuItem createCategoryMenuItem, viewCategoriesMenuItem, logoutMenuItem;
+
+    private TableView<MonthlyFinance> transactionTable;
+    private TableColumn<MonthlyFinance, String> monthColumn;
+    private TableColumn<MonthlyFinance, BigDecimal> incomeColumn;
+    private TableColumn<MonthlyFinance, BigDecimal> expenseColumn;
 
     public DashboardView(String email){
         this.email = email;
@@ -45,6 +57,7 @@ public class DashboardView {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
                 loadingAnimationPane.resizeWidth(t1.doubleValue());
+                resizeTableWidthColumns();
             }
         });
         scene.heightProperty().addListener(new ChangeListener<Number>() {
@@ -123,12 +136,58 @@ public class DashboardView {
         columnConstraint.setPercentWidth(50);
         gridPane.getColumnConstraints().addAll(columnConstraint, columnConstraint);
 
-        //recent transactions
+        //transaction table left side
+        VBox transactionsTableSummaryBox = new VBox(20);
+        HBox yearComboBoxAndChartButtonBox = createYearComboBoxAndChartButtonBox();
+        VBox transactionTableContentBox = createTransactionsTableContentBox();
+        VBox.setVgrow(transactionTableContentBox, Priority.ALWAYS);
+        transactionsTableSummaryBox.getChildren().addAll(yearComboBoxAndChartButtonBox, transactionTableContentBox);
+
+        //recent transactions right side
         VBox recentTransactionsVBox = createRecentTransactionsVBox();
         recentTransactionsVBox.getStyleClass().addAll("field-background", "rounded-border", "padding-10px");
         GridPane.setVgrow(recentTransactionsVBox, Priority.ALWAYS);
+
+        gridPane.add(transactionsTableSummaryBox, 0, 0);
         gridPane.add(recentTransactionsVBox, 1, 0);
         return gridPane;
+     }
+
+     private HBox createYearComboBoxAndChartButtonBox(){
+        HBox hbox = new HBox(15);
+        yearComboBox = new ComboBox<>();
+        yearComboBox.getStyleClass().addAll("text-size-sm");
+        yearComboBox.setValue(Year.now().getValue());
+
+        viewChartButton = new Button("View Chart");
+        viewChartButton.getStyleClass().addAll("field-background", "text-light-gray", "text-size-sm");
+
+        hbox.getChildren().addAll(yearComboBox, viewChartButton);
+        return hbox;
+     }
+
+     private VBox createTransactionsTableContentBox(){
+           VBox vbox = new VBox();
+            transactionTable = new TableView<>();
+            VBox.setVgrow(transactionTable, Priority.ALWAYS);
+
+            monthColumn = new TableColumn<>("Month");
+            monthColumn.setCellValueFactory(new PropertyValueFactory<>("month"));
+            monthColumn.getStyleClass().addAll("main-background", "text-size-md", "text-light-gray");
+
+            incomeColumn = new TableColumn<>("Income");
+            incomeColumn.setCellValueFactory(new PropertyValueFactory<>("income"));
+            incomeColumn.getStyleClass().addAll("main-background", "text-size-md", "text-light-gray");
+
+         expenseColumn = new TableColumn<>("Expense");
+         expenseColumn.setCellValueFactory(new PropertyValueFactory<>("expense"));
+         expenseColumn.getStyleClass().addAll("main-background", "text-size-md", "text-light-gray");
+
+         transactionTable.getColumns().addAll(monthColumn, incomeColumn, expenseColumn);
+         vbox.getChildren().addAll(transactionTable);
+
+         resizeTableWidthColumns();
+         return vbox;
      }
 
      private VBox createRecentTransactionsVBox(){
@@ -157,6 +216,18 @@ public class DashboardView {
          recentTransactionVBox.getChildren().addAll(recentTransactionLabelandAddBtnBox, recentTransactionScrollPane);
         return recentTransactionVBox;
      }
+
+    private void  resizeTableWidthColumns(){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                double colsWidth = transactionTable.getWidth() * (0.335);
+                monthColumn.setPrefWidth(colsWidth);
+                incomeColumn.setPrefWidth(colsWidth);
+                expenseColumn.setPrefWidth(colsWidth);
+            }
+        });
+    }
 
     public MenuItem getCreateCategoryMenuItem() {
         return createCategoryMenuItem;
@@ -188,5 +259,25 @@ public class DashboardView {
 
     public LoadingAnimationPane getLoadingAnimationPane(){
         return loadingAnimationPane;
+    }
+
+    public TableView<MonthlyFinance> getTransactionTable() {
+        return transactionTable;
+    }
+
+    public TableColumn<MonthlyFinance, String> getMonthColumn() {
+        return monthColumn;
+    }
+
+    public TableColumn<MonthlyFinance, BigDecimal> getIncomeColumn() {
+        return incomeColumn;
+    }
+
+    public TableColumn<MonthlyFinance, BigDecimal> getExpenseColumn() {
+        return expenseColumn;
+    }
+
+    public ComboBox<Integer> getYearComboBox(){
+        return yearComboBox;
     }
 }

@@ -146,6 +146,67 @@ public class SqlUtil {
         return null;
     }
 
+    public static List<Transaction> getAllTransactionsByUserId(int userId, int year){
+        List<Transaction> transactions = new ArrayList<>();
+
+        HttpURLConnection conn = null;
+        try{
+            conn = ApiUtil.fetchApi(
+                    "/api/v1/transaction/user/" +userId + "?year=" + year,
+                    ApiUtil.RequestMethod.GET,
+                    null
+            );
+            if(conn.getResponseCode() != 200){
+                return null;
+            }
+            String results = ApiUtil.readApiResponse(conn);
+            JsonArray resultJson = new JsonParser().parse(results).getAsJsonArray();
+            for(int i=0; i<resultJson.size(); i++){
+                JsonObject transactionJsonObj = resultJson.get(i).getAsJsonObject();
+                int transactionId = transactionJsonObj.get("id").getAsInt();
+                TransactionCategory transactionCategory = null;
+                if(transactionJsonObj.has("transactionCategory") && !transactionJsonObj.get("transactionCategory").isJsonNull()){
+                    JsonObject transactionCategoryJsonObj = transactionJsonObj.get("transactionCategory").getAsJsonObject();
+                    int transactionCategoryId = transactionCategoryJsonObj.get("id").getAsInt();
+                    String transactionCategoryName = transactionCategoryJsonObj.get("categoryName").getAsString();
+                    String transactionCategoryColor = transactionCategoryJsonObj.get("categoryColor").getAsString();
+
+                    transactionCategory = new TransactionCategory(
+                            transactionCategoryId,
+                            transactionCategoryName,
+                            transactionCategoryColor
+                    );
+                }
+
+                String transactionName = transactionJsonObj.get("transactionName").getAsString();
+                double transactionAmount = transactionJsonObj.get("transactionAmount").getAsDouble();
+                LocalDate transactionDate = LocalDate.parse(transactionJsonObj.get("transactionDate").getAsString());
+                String  transactionType = transactionJsonObj.get("transactionType").getAsString();
+
+                Transaction transaction = new Transaction(
+                        transactionId,
+                        transactionCategory,
+                        transactionName,
+                        transactionAmount,
+                        transactionDate,
+                        transactionType
+                );
+
+                transactions.add(transaction);
+            }
+
+            return transactions;
+
+        }catch(IOException e){
+            e.printStackTrace();
+        }finally {
+            if(conn != null){
+                conn.disconnect();
+            }
+        }
+        return null;
+    }
+
     public static boolean postLoginUser(String email, String password){
         HttpURLConnection conn = null;
         try{

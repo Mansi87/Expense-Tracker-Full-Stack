@@ -1,5 +1,7 @@
 package org.example.controllers;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
@@ -7,12 +9,16 @@ import org.example.components.TransactionComponent;
 import org.example.dialog.CreateNewCategoryDialog;
 import org.example.dialog.CreateOrEditTransactionDialog;
 import org.example.dialog.ViewOrEditTransactionCategoryDialog;
+import org.example.models.MonthlyFinance;
 import org.example.models.Transaction;
 import org.example.models.User;
 import org.example.utils.SqlUtil;
 import org.example.views.DashboardView;
 import org.example.views.LoginView;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 public class DashboardController {
@@ -21,11 +27,13 @@ public class DashboardController {
     private DashboardView dashboardView;
     private User user;
 
+    private List<Transaction> recentTransactions, currentTransactionByYear;
     private int currentPage;
-    private List<Transaction> recentTransactions;
+    private int currentYear;
 
     public DashboardController(DashboardView dashboardView){
         this.dashboardView = dashboardView;
+        currentYear = dashboardView.getYearComboBox().getValue();
         this.currentPage=0;
         fetchUserData();
         initialize();
@@ -35,6 +43,10 @@ public class DashboardController {
         dashboardView.getLoadingAnimationPane().setVisible(true);
         dashboardView.getRecentTransactionBox().getChildren().clear();
         user = SqlUtil.getUserByEmail(dashboardView.getEmail());
+
+        currentTransactionByYear = SqlUtil.getAllTransactionsByUserId(user.getId(), currentYear);
+        dashboardView.getTransactionTable().setItems(calculateMonthlyFinances());
+
         createRecentTransactionComponents();
 
         new Thread(new Runnable() {
@@ -64,6 +76,33 @@ public class DashboardController {
                     new TransactionComponent(this, transaction)
             );
         }
+    }
+
+    private ObservableList<MonthlyFinance> calculateMonthlyFinances(){
+        double[] incomeCounter = new double[12];
+        double[] expenseCounter = new double[12];
+
+        for(Transaction transaction : currentTransactionByYear){
+            LocalDate transactionDate = transaction.getTransactionDate();
+            if(transaction.getTransactionType().equalsIgnoreCase("income")){
+                incomeCounter[transactionDate.getMonth().getValue() -1] += transaction.getTransactionAmount();
+            }
+            else{
+                expenseCounter[transactionDate.getMonth().getValue() -1] += transaction.getTransactionAmount();
+            }
+        }
+
+        ObservableList<MonthlyFinance> monthlyFinances = FXCollections.observableArrayList();
+        for(int i=0; i<12; i++){
+            MonthlyFinance monthlyFinance = new MonthlyFinance(
+                    Month.of(i+1).name(),
+                    new BigDecimal(String.valueOf(incomeCounter[i])),
+                    new BigDecimal(String.valueOf(expenseCounter[i]))
+            );
+            monthlyFinances.add(monthlyFinance);
+
+        }
+        return monthlyFinances;
     }
 
     private void initialize(){
@@ -107,4 +146,5 @@ public class DashboardController {
     public User getUser(){
         return user;
     }
+
 }
