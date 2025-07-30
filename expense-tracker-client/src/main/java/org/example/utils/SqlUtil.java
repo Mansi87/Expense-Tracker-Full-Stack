@@ -8,6 +8,8 @@ import org.example.models.User;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -355,10 +357,13 @@ public class SqlUtil {
 
     public static boolean putTransactionCategory(int categoryId, String newCategoryName, String newCategoryColor){
         HttpURLConnection conn = null;
+        String encodedCategoryName = URLEncoder.encode(newCategoryName, StandardCharsets.UTF_8);
+        String encodedCategoryColor = URLEncoder.encode(newCategoryColor, StandardCharsets.UTF_8);
+
         try{
             conn = ApiUtil.fetchApi(
-                    "/api/v1/transaction-category/" +categoryId + "?newCategoryName=" + newCategoryName +
-                            "&newCategoryColor=" +newCategoryColor,
+                    "/api/v1/transaction-category/" +categoryId + "?newCategoryName=" + encodedCategoryName +
+                            "&newCategoryColor=" +encodedCategoryColor,
                     ApiUtil.RequestMethod.PUT,
                     null
             );

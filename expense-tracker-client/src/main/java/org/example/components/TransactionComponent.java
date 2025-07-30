@@ -108,4 +108,20 @@ public class TransactionComponent extends HBox {
     public Transaction getTransaction(){
         return transaction;
     }
+
+    public Label getTransactionCategoryLabel() {
+        return transactionCategoryLabel;
+    }
+
+    public Label getTransactionNameLabel() {
+        return transactionNameLabel;
+    }
+
+    public Label getTransactionDateLabel() {
+        return transactionDateLabel;
+    }
+
+    public Label getTransactionAmountLabel() {
+        return transactionAmountLabel;
+    }
 }

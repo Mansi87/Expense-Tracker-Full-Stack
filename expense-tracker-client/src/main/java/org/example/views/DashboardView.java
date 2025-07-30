@@ -281,4 +281,20 @@ public class DashboardView {
     public ComboBox<Integer> getYearComboBox(){
         return yearComboBox;
     }
+
+    public Label getCurrentBalance() {
+        return currentBalance;
+    }
+
+    public Label getTotalIncome() {
+        return totalIncome;
+    }
+
+    public Label getTotalExpense() {
+        return totalExpense;
+    }
+
+    public Button getViewChartButton(){
+        return viewChartButton;
+    }
 }

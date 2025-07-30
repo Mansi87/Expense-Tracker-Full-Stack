@@ -161,9 +161,12 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
                             transactionCategories,
                             transactionCategoryName
                     );
-                    JsonObject userData = new JsonObject();
-                    transactionCategoryData.addProperty("id", transactionCategory.getId());
-                    transactionDataObject.add("transactionCategory", transactionCategoryData);
+                    if(transactionCategory != null){
+                        JsonObject userData = new JsonObject();
+                        transactionCategoryData.addProperty("id", transactionCategory.getId());
+                        transactionDataObject.add("transactionCategory", transactionCategoryData);
+                    }
+
                 }
 
                 JsonObject userData = new JsonObject();
@@ -175,6 +178,15 @@ public class CreateOrEditTransactionDialog extends CustomDialog{
                             isEditing ? "Successfully saved transaction!" :"Transaction creation Successful!");
 
                     dashboardController.fetchUserData();
+
+                    if(isEditing){
+                        transactionComponent.getTransactionCategoryLabel().setText(
+                                transactionCategoryName.isEmpty() ? "Undefined" : transactionCategoryName
+                        );
+                        transactionComponent.getTransactionNameLabel().setText(transactionName);
+                        transactionComponent.getTransactionDateLabel().setText(transactionDate.toString());
+                        transactionComponent.getTransactionAmountLabel().setText(String.valueOf(transactionAmount));
+                    }
                 }
                 else{
                     Utilitie.showAlertDialog(Alert.AlertType.ERROR,

@@ -69,6 +69,7 @@ public class CategoryComponent extends HBox {
                 String newCategoryColor = Utilitie.getHexColorValue(colorPicker);
 
                 SqlUtil.putTransactionCategory(transactionCategory.getId(), newCategoryName, newCategoryColor);
+                dashboardController.fetchUserData();
             }
         });
 

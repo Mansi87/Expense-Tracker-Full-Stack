@@ -9,10 +9,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 import org.example.components.TransactionComponent;
-import org.example.dialog.CreateNewCategoryDialog;
-import org.example.dialog.CreateOrEditTransactionDialog;
-import org.example.dialog.ViewOrEditTransactionCategoryDialog;
-import org.example.dialog.ViewTransactionsDialog;
+import org.example.dialog.*;
 import org.example.models.MonthlyFinance;
 import org.example.models.Transaction;
 import org.example.models.User;
@@ -21,6 +18,7 @@ import org.example.views.DashboardView;
 import org.example.views.LoginView;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
@@ -49,9 +47,10 @@ public class DashboardController {
         user = SqlUtil.getUserByEmail(dashboardView.getEmail());
 
         currentTransactionByYear = SqlUtil.getAllTransactionsByUserId(user.getId(), currentYear, null);
-       // dashboardView.getYearComboBox().setItems(FXCollections.observableList(SqlUtil.getAllDistinctYears(user.getId())));
-        dashboardView.getTransactionTable().setItems(calculateMonthlyFinances());
+        calculateDistinctYears();
+        calculateBalanceAndIncomeAndExpense();
 
+        dashboardView.getTransactionTable().setItems(calculateMonthlyFinances());
         createRecentTransactionComponents();
 
         new Thread(new Runnable() {
@@ -65,6 +64,39 @@ public class DashboardController {
                 }
             }
         }).start();
+    }
+
+    private void calculateDistinctYears(){
+        List<Integer> distinctYears = SqlUtil.getAllDistinctYears(user.getId());
+        for(Integer integer : distinctYears){
+            if(!dashboardView.getYearComboBox().getItems().contains(integer)){
+                dashboardView.getYearComboBox().getItems().add(integer);
+            }
+        }
+    }
+
+    private void calculateBalanceAndIncomeAndExpense(){
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        BigDecimal totalExpense = BigDecimal.ZERO;
+        if(currentTransactionByYear != null){
+            for(Transaction transaction : currentTransactionByYear){
+                BigDecimal transactionAmount = BigDecimal.valueOf(transaction.getTransactionAmount());
+                if(transaction.getTransactionType().equalsIgnoreCase("income")){
+                    totalIncome = totalIncome.add(transactionAmount);
+                }else{
+                    totalExpense = totalExpense.add(transactionAmount);
+                }
+            }
+        }
+        totalIncome = totalIncome.setScale(2, RoundingMode.HALF_UP);
+        totalExpense = totalExpense.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal currentBalance = totalIncome.subtract(totalExpense);
+        currentBalance = currentBalance.setScale(2, RoundingMode.HALF_UP);
+
+        //update view
+        dashboardView.getTotalExpense().setText("₹" + totalExpense);
+        dashboardView.getTotalIncome().setText("₹" + totalIncome);
+        dashboardView.getCurrentBalance().setText("₹" + currentBalance);
     }
 
     private void createRecentTransactionComponents(){
@@ -114,6 +146,7 @@ public class DashboardController {
         addMenuActions();
         addRecentTransactionActions();
         addComboBoxActions();
+        addViewChartActions();
         addTableActions();
     }
 
@@ -157,6 +190,15 @@ public class DashboardController {
                 currentYear = dashboardView.getYearComboBox().getValue();
                 fetchUserData();
 
+            }
+        });
+    }
+
+    private void addViewChartActions(){
+        dashboardView.getViewChartButton().setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                new ViewChartDialog(user, dashboardView.getTransactionTable().getItems()).showAndWait();
             }
         });
     }
