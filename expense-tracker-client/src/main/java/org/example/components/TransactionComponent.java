@@ -96,6 +96,8 @@ public class TransactionComponent extends HBox {
                 if(getParent() instanceof VBox){
                     ((VBox) getParent()).getChildren().remove(TransactionComponent.this);
                 }
+
+                dashboardController.fetchUserData();
             }
         });
 

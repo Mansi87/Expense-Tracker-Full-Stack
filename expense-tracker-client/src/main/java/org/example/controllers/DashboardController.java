@@ -4,11 +4,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
+import javafx.util.Callback;
 import org.example.components.TransactionComponent;
 import org.example.dialog.CreateNewCategoryDialog;
 import org.example.dialog.CreateOrEditTransactionDialog;
 import org.example.dialog.ViewOrEditTransactionCategoryDialog;
+import org.example.dialog.ViewTransactionsDialog;
 import org.example.models.MonthlyFinance;
 import org.example.models.Transaction;
 import org.example.models.User;
@@ -44,7 +48,8 @@ public class DashboardController {
         dashboardView.getRecentTransactionBox().getChildren().clear();
         user = SqlUtil.getUserByEmail(dashboardView.getEmail());
 
-        currentTransactionByYear = SqlUtil.getAllTransactionsByUserId(user.getId(), currentYear);
+        currentTransactionByYear = SqlUtil.getAllTransactionsByUserId(user.getId(), currentYear, null);
+       // dashboardView.getYearComboBox().setItems(FXCollections.observableList(SqlUtil.getAllDistinctYears(user.getId())));
         dashboardView.getTransactionTable().setItems(calculateMonthlyFinances());
 
         createRecentTransactionComponents();
@@ -108,6 +113,8 @@ public class DashboardController {
     private void initialize(){
         addMenuActions();
         addRecentTransactionActions();
+        addComboBoxActions();
+        addTableActions();
     }
 
     private void addMenuActions(){
@@ -142,9 +149,42 @@ public class DashboardController {
         });
     }
 
+    private void addComboBoxActions(){
+        dashboardView.getYearComboBox().setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                //update current year
+                currentYear = dashboardView.getYearComboBox().getValue();
+                fetchUserData();
+
+            }
+        });
+    }
+
+    private void addTableActions(){
+        dashboardView.getTransactionTable().setRowFactory(new Callback<TableView<MonthlyFinance>, TableRow<MonthlyFinance>>() {
+            @Override
+            public TableRow<MonthlyFinance> call(TableView<MonthlyFinance> monthlyFinanceTableView) {
+                TableRow<MonthlyFinance> row = new TableRow<>();
+                row.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent mouseEvent) {
+                        if(!row.isEmpty() && mouseEvent.getClickCount() == 2){
+                            MonthlyFinance monthlyFinance = row.getItem();
+                            new ViewTransactionsDialog(DashboardController.this, monthlyFinance.getMonth()).showAndWait();
+                        }
+                    }
+                });
+                return row;
+            }
+        });
+    }
 
     public User getUser(){
         return user;
     }
 
+    public int getCurrentYear() {
+        return currentYear;
+    }
 }

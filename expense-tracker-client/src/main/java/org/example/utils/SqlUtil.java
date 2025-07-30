@@ -146,13 +146,17 @@ public class SqlUtil {
         return null;
     }
 
-    public static List<Transaction> getAllTransactionsByUserId(int userId, int year){
+    public static List<Transaction> getAllTransactionsByUserId(int userId, int year, Integer month){
         List<Transaction> transactions = new ArrayList<>();
 
         HttpURLConnection conn = null;
+        String apiPath = "/api/v1/transaction/user/" +userId + "?year=" + year;
+        if(month !=null){
+            apiPath += "&month=" + month;
+        }
         try{
             conn = ApiUtil.fetchApi(
-                    "/api/v1/transaction/user/" +userId + "?year=" + year,
+                    apiPath,
                     ApiUtil.RequestMethod.GET,
                     null
             );
@@ -197,6 +201,36 @@ public class SqlUtil {
 
             return transactions;
 
+        }catch(IOException e){
+            e.printStackTrace();
+        }finally {
+            if(conn != null){
+                conn.disconnect();
+            }
+        }
+        return null;
+    }
+
+    public static List<Integer> getAllDistinctYears(int userId){
+        List<Integer> distinctYears = new ArrayList<>();
+        HttpURLConnection conn = null;
+        try{
+            conn = ApiUtil.fetchApi(
+                    "/api/v1/transaction/years/" +userId,
+                    ApiUtil.RequestMethod.GET,
+                    null
+            );
+            if(conn.getResponseCode() != 200){
+                System.out.println("Error(getAllDistinctYears): " + conn.getResponseCode());
+            }
+            String result = ApiUtil.readApiResponse(conn);
+            JsonArray resultsArray = new JsonParser().parse(result).getAsJsonArray();
+            for(int i=0; i<resultsArray.size(); i++){
+                int year = resultsArray.get(i).getAsInt();
+                distinctYears.add(year);
+            }
+
+            return distinctYears;
         }catch(IOException e){
             e.printStackTrace();
         }finally {

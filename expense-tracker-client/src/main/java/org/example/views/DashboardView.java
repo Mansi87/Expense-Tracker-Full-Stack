@@ -131,6 +131,7 @@ public class DashboardView {
 
     private GridPane createContentGridPane(){
         GridPane gridPane = new GridPane();
+        gridPane.setHgap(10);
 
         ColumnConstraints columnConstraint = new ColumnConstraints();
         columnConstraint.setPercentWidth(50);
